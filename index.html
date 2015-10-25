@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html ng-app="logs">
+<head>
+    <meta charset="utf-8" />
+    <title>Logs</title>
+    <script>document.write('<base href="' + document.location + '" />');</script>
+    <script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script data-require="angular.js@1.0.x" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.min.js" data-semver="1.0.8"></script>
+</head>
+
+<body>
+    <a href="#/logs">Logs</a>
+    <a href="#/logs/add">Add</a>
+    <p ng-view></p>
+
+
+<script>
+
+var app = angular.module('logs', []);
+
+app.config(['$routeProvider' , function($routeProvider ) {
+    $routeProvider.when('/logs', {
+        templateUrl : "logs.html"
+    }).when('/logs/add', {
+        templateUrl : "add.html"
+    }).otherwise({
+        redirectTo: 'logs'
+    });
+}]);
+
+app.controller('MainCtrl', function($scope,$http) {
+    $http({
+        method: 'GET',
+        url: '/api/logs'
+    }).then(function successCallback(response) {
+        $scope.logs = response.data;
+    }, function errorCallback(response) {
+        $scope.status = "Failed to get list of logs";
+    });
+});
+
+
+app.controller('AddCtrl', function($scope,$http) {
+    $scope.type = "";
+    $scope.detail = "";
+
+    $scope.addlog = function() {
+        $scope.status = "Trying to post...";
+        if ($scope.type != "" && $scope.detail != "") {
+            $http({
+                method: 'POST',
+                url: '/api/logs',
+                data: {type: $scope.type, detail: $scope.detail}
+            }).then(function successCallback(response) {
+                console.log(response);
+                $scope.type = "";
+                $scope.detail = "";
+                $scope.status = "Added OK";
+            }, function errorCallback(response) {
+                $scope.status = "Failed to post form";
+            });
+        }
+    };
+
+});
+
+</script>
+
+
+<script type="text/ng-template" id="logs.html">
+    <div ng-controller="MainCtrl">
+        <h1>Logs</h1>
+        <div ng-repeat="log in logs">
+            {{ log }}
+        </div>
+        <div>{{status}}</div>
+    </div>
+</script>
+
+<script type="text/ng-template" id="add.html">
+    <div ng-controller="AddCtrl">
+        <h1>Add</h1>
+        <form ng-submit="addlog()">
+            <input type="text" placeholder="type" name="type" ng-model="type">
+            <input type="text" placeholder="detail" name="detail" ng-model="detail">
+            <input type="submit">
+        </form>
+
+        <div>{{status}}</div>
+    </div>
+</script>
+
+</body>
+</html>
